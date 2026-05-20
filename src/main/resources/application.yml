@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: banking-mcp-server
+  ai:
+    mcp:
+      server:
+        name: banking-mcp-server
+        version: 1.0.0
+        description: "MCP Server for NEFT/RTGS Banking Payment APIs"
+        transport: HTTP
+
+logging:
+  level:
+    com.banking.mcp: DEBUG
+    org.springframework.ai: INFO
