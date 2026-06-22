@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-mcp-server
+spec:
+  type: ClusterIP
+  selector:
+    app: banking-mcp-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

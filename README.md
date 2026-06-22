@@ -1,104 +1,109 @@
-# 🏦 banking-mcp-server
+# banking-mcp-server
 
-> An open-source **Model Context Protocol (MCP) server** exposing mock NEFT/RTGS payment APIs as tools for LLM agents. Built with Java & Spring Boot.
+An open-source MCP Server for Banking. It exposes mock account, payment,
+branch, beneficiary, and loan APIs as MCP tools consumable by AI agents.
 
-[![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green.svg)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
 [![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blue.svg)](https://modelcontextprotocol.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 📌 Overview
+## Why This Exists
 
-This project implements a **Model Context Protocol (MCP) server** that exposes Indian payment system APIs (NEFT, RTGS, IMPS) as structured tools consumable by LLM agents (Claude, GPT-4, etc.).
+Banking teams are beginning to evaluate agentic AI, but safe tool integration
+needs deterministic, non-production systems. This project provides a banking
+MCP server that looks like real financial infrastructure without touching real
+money or customer data.
 
-It enables AI agents to:
-- Initiate and query NEFT/RTGS transactions
-- Check payment status and transaction history
-- Validate beneficiary account details
-- Retrieve bank branch (IFSC) information
-- Monitor real-time payment processing queues
+It reflects patterns from NEFT/RTGS payment systems, Spring Boot
+microservices, distributed architecture, API-first design, and responsible MCP
+tool exposure.
 
-> 💡 One of the first open-source MCP servers purpose-built for Indian banking/payment systems.
+## Architecture
 
----
+```mermaid
+flowchart LR
+    Agent["AI Agent<br/>Claude Desktop / ChatGPT / Custom Client"]
+    MCP["MCP Endpoint<br/>Spring AI MCP Server"]
+    Tools["Banking MCP Tools"]
+    REST["REST API<br/>OpenAPI / Swagger"]
+    Service["Banking Service Layer<br/>Validation and Policies"]
+    Data["Mock Banking Repository"]
+    PG["PostgreSQL<br/>Audit and Projection Schema"]
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                  LLM Agent (Claude / GPT)               │
-└──────────────────────────┬──────────────────────────────┘
-                           │  MCP Protocol (JSON-RPC)
-┌──────────────────────────▼──────────────────────────────┐
-│            banking-mcp-server  (Spring Boot)            │
-│                                                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐   │
-│  │ NEFT Tools  │  │ RTGS Tools  │  │ Account Tools │   │
-│  └─────────────┘  └─────────────┘  └───────────────┘   │
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │        Mock Payment Processing Engine           │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
+    Agent -->|MCP JSON-RPC| MCP
+    MCP --> Tools
+    Tools --> Service
+    REST --> Service
+    Service --> Data
+    Service -. production-ready schema .-> PG
 ```
 
----
+## MCP Tools
 
-## 🛠️ Tech Stack
+| Tool | Description |
+| --- | --- |
+| `account_inquiry` | Look up mock account profile details |
+| `balance_check` | Check available and ledger balance |
+| `transaction_history` | Fetch recent account transactions |
+| `neft_payment` | Initiate mock NEFT payment |
+| `rtgs_payment` | Initiate mock RTGS payment |
+| `beneficiary_management` | Add and validate beneficiaries |
+| `payment_status` | Query payment status by UTR |
+| `branch_locator` | Find branch and IFSC metadata |
+| `loan_eligibility` | Evaluate mock loan eligibility |
+
+## Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Language | Java 17 |
-| Framework | Spring Boot 3.2 |
-| MCP | Spring AI MCP Server |
-| API | REST / JSON-RPC |
+| --- | --- |
+| Runtime | Java 21 |
+| Framework | Spring Boot 3.x |
+| Agent Integration | Spring AI MCP Server, MCP Java SDK through Spring AI |
+| API | REST, OpenAPI, Swagger UI |
+| Data | Mock repository, PostgreSQL schema via Flyway |
 | Build | Maven |
-| Testing | JUnit 5, Mockito |
+| Platform | Docker, Kubernetes |
+| CI/CD | GitHub Actions |
 
----
+## Quick Start
 
-## 🔧 MCP Tools Exposed
-
-### Payment Tools
-| Tool | Description |
-|---|---|
-| `initiate_neft_transfer` | Initiate a NEFT payment transaction |
-| `initiate_rtgs_transfer` | Initiate an RTGS payment (min ₹2L) |
-| `get_payment_status` | Query status of a transaction by UTR number |
-| `get_transaction_history` | Fetch transaction history for an account |
-
-### Account & Validation Tools
-| Tool | Description |
-|---|---|
-| `validate_account` | Validate beneficiary account + IFSC |
-| `get_ifsc_details` | Fetch bank branch details by IFSC code |
-| `get_account_balance` | Retrieve mock account balance |
-
-### Monitoring Tools
-| Tool | Description |
-|---|---|
-| `get_queue_status` | Monitor NEFT batch queue status |
-| `get_settlement_cycles` | List upcoming NEFT settlement windows |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Java 17+
-- Maven 3.8+
-
-### Run Locally
 ```bash
-git clone https://github.com/abhijitnarewade/banking-mcp-server.git
+git clone https://github.com/your-org/banking-mcp-server.git
 cd banking-mcp-server
-mvn spring-boot:run
+mvn verify
+docker compose up --build
 ```
 
-Server starts at: `http://localhost:8080/mcp`
+Application URLs:
 
-### Connect with Claude Desktop
-Add to your `claude_desktop_config.json`:
+- REST API: `http://localhost:8080/api/v1`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Tool catalog: `http://localhost:8080/api/v1/mcp/tools`
+- Health: `http://localhost:8080/actuator/health`
+
+## Example REST Calls
+
+```bash
+curl http://localhost:8080/api/v1/accounts/123456789012/balance
+curl "http://localhost:8080/api/v1/branches?city=Mumbai"
+```
+
+```bash
+curl -X POST http://localhost:8080/api/v1/payments/neft \
+  -H "Content-Type: application/json" \
+  -d '{
+    "debitAccount": "123456789012",
+    "beneficiaryAccount": "555544443333",
+    "beneficiaryName": "Nisha Rao",
+    "ifscCode": "SBIN0004321",
+    "amount": 50000.00,
+    "remarks": "Invoice settlement"
+  }'
+```
+
+## Claude Desktop Example
+
 ```json
 {
   "mcpServers": {
@@ -110,59 +115,50 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
----
+## Project Structure
 
-## 📂 Project Structure
-
-```
+```text
 banking-mcp-server/
+├── .github/workflows/ci.yml
+├── docs/
+│   ├── api.md
+│   ├── mcp-tools.md
+│   └── prompts.md
+├── k8s/
+│   ├── deployment.yaml
+│   ├── secret.example.yaml
+│   └── service.yaml
 ├── src/main/java/com/banking/mcp/
-│   ├── BankingMcpServerApplication.java
+│   ├── client/
 │   ├── config/
-│   │   └── McpServerConfig.java
-│   ├── tools/
-│   │   ├── NeftPaymentTool.java
-│   │   ├── RtgsPaymentTool.java
-│   │   ├── AccountValidationTool.java
-│   │   └── TransactionQueryTool.java
+│   ├── domain/
+│   ├── dto/
+│   ├── repository/
 │   ├── service/
-│   │   ├── PaymentProcessingService.java
-│   │   └── AccountService.java
-│   └── model/
-│       ├── NeftTransaction.java
-│       ├── RtgsTransaction.java
-│       └── PaymentStatus.java
-├── src/main/resources/
-│   ├── application.yml
-│   └── mock-data/
-│       ├── accounts.json
-│       └── ifsc-codes.json
-├── src/test/
+│   ├── tools/
+│   └── web/
+├── src/main/resources/db/migration/
+├── src/test/java/com/banking/mcp/
+├── Dockerfile
+├── docker-compose.yml
 ├── pom.xml
 └── README.md
 ```
 
----
+## Safety
 
-## 📋 Example Agent Interaction
+This repository never connects to real banking rails. All accounts, balances,
+branches, beneficiaries, payments, and loan decisions are mock data. Do not put
+real account numbers, credentials, OTPs, PAN, Aadhaar, card data, or customer
+data into prompts or tests.
 
-**User → Claude:** *"Transfer ₹50,000 via NEFT to account 9876543210, IFSC HDFC0001234"*
+## Documentation
 
-**Agent flow:**
-1. `validate_account` → confirms account + IFSC are valid
-2. `get_settlement_cycles` → identifies next NEFT batch window
-3. `initiate_neft_transfer` → creates transaction, returns UTR number
-4. `get_payment_status` → confirms processing status
+- [API documentation](docs/api.md)
+- [MCP tool definitions](docs/mcp-tools.md)
+- [Example agent prompts](docs/prompts.md)
+- [Contributing guide](CONTRIBUTING.md)
 
----
+## License
 
-## 🤝 Contributing
-
-PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE)
-
----
-*Built by [Abhijit Narewade](https://linkedin.com/in/abhijit-narewade) — Principal Engineer, Banking Technology & AI Systems*
+MIT. See [LICENSE](LICENSE).

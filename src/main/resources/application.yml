@@ -4,13 +4,36 @@ server:
 spring:
   application:
     name: banking-mcp-server
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/banking_mcp}
+    username: ${SPRING_DATASOURCE_USERNAME:banking_mcp}
+    password: ${SPRING_DATASOURCE_PASSWORD:banking_mcp}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
   ai:
     mcp:
       server:
         name: banking-mcp-server
         version: 1.0.0
-        description: "MCP Server for NEFT/RTGS Banking Payment APIs"
-        transport: HTTP
+        type: SYNC
+        instructions: "Use these tools only for mock banking workflows. Never treat responses as real account data."
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
 
 logging:
   level:

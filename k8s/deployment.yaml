@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-mcp-server
+  labels:
+    app: banking-mcp-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: banking-mcp-server
+  template:
+    metadata:
+      labels:
+        app: banking-mcp-server
+    spec:
+      containers:
+        - name: banking-mcp-server
+          image: ghcr.io/your-org/banking-mcp-server:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: banking-mcp-db
+                  key: url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: banking-mcp-db
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: banking-mcp-db
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
